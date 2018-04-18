@@ -29,7 +29,7 @@ class MemoryLimitReceiver implements ReceiverInterface
 
     public function receive(callable $handler): void
     {
-        $this->decoratedReceiver->receive(function($message) use ($handler) {
+        $this->decoratedReceiver->receive(function ($message) use ($handler) {
             $handler($message);
 
             if (memory_get_usage() / 1024 / 1024 >= $this->memoryLimit) {
