@@ -52,7 +52,7 @@ class ConsumeMessagesCommand extends Command
             ->setDefinition(array(
                 new InputArgument('receiver', InputArgument::REQUIRED, 'Name of the receiver'),
                 new InputOption('limit', 'l', InputOption::VALUE_REQUIRED, 'Limit the number of received messages'),
-                new InputOption('memory', 'm', InputOption::VALUE_REQUIRED, 'The memory limit in megabytes the worker can consume'),
+                new InputOption('memory-limit', 'm', InputOption::VALUE_REQUIRED, 'The memory limit the worker can consume'),
             ))
             ->setDescription('Consumes messages')
             ->setHelp(<<<'EOF'
@@ -64,9 +64,9 @@ Use the --limit option to limit the number of messages received:
 
     <info>php %command.full_name% <receiver-name> --limit=10</info>
 
-Use the --memory option to limit the memory consumed by the worker:
+Use the --memory-limit option to limit the memory consumed by the worker. Use PHP shorthand byte values [K, M or G]:
 
-    <info>php %command.full_name% <receiver-name> --memory=128</info>
+    <info>php %command.full_name% <receiver-name> --memory-limit=128M</info>
 EOF
             )
         ;
@@ -89,8 +89,8 @@ EOF
             $receiver = new MaximumCountReceiver($receiver, $limit);
         }
 
-        if ($memory = $input->getOption('memory')) {
-            $receiver = new MemoryLimitReceiver($receiver, $memory);
+        if ($memoryLimit = $input->getOption('memory-limit')) {
+            $receiver = new MemoryLimitReceiver($receiver, $memoryLimit);
         }
 
         $worker = new Worker($receiver, $this->bus);
