@@ -20,11 +20,15 @@ class MemoryLimitReceiver implements ReceiverInterface
 {
     private $decoratedReceiver;
     private $memoryLimit;
+    private $memoryResolver;
 
-    public function __construct(ReceiverInterface $decoratedReceiver, string $memoryLimit)
+    public function __construct(ReceiverInterface $decoratedReceiver, string $memoryLimit, callable $memoryResolver = null)
     {
         $this->decoratedReceiver = $decoratedReceiver;
         $this->memoryLimit = $this->convertToOctets($memoryLimit);
+        $this->memoryResolver = $memoryResolver ?? function () {
+            return \memory_get_usage();
+        };
     }
 
     public function receive(callable $handler): void
@@ -32,7 +36,8 @@ class MemoryLimitReceiver implements ReceiverInterface
         $this->decoratedReceiver->receive(function ($message) use ($handler) {
             $handler($message);
 
-            if (\memory_get_usage() >= $this->memoryLimit) {
+            $memoryResolver = $this->memoryResolver;
+            if ($memoryResolver() >= $this->memoryLimit) {
                 $this->stop();
             }
         });
@@ -45,14 +50,16 @@ class MemoryLimitReceiver implements ReceiverInterface
 
     private function convertToOctets(string $size): int
     {
-        if (\preg_match('/^(\d+)(.)$/', $size, $matches)) {
-            if ($matches[2] == 'G') {
+        if (\preg_match('/^(\d+)([G|M|K]*)$/', $size, $matches)) {
+            if ('G' == $matches[2]) {
                 $size = $matches[1] * 1024 * 1024 * 1024;
-            } else if ($matches[2] == 'M') {
+            } elseif ('M' == $matches[2]) {
                 $size = $matches[1] * 1024 * 1024;
-            } else if ($matches[2] == 'K') {
+            } elseif ('K' == $matches[2]) {
                 $size = $matches[1] * 1024;
             }
+        } else {
+            throw new \InvalidArgumentException('Invalid memory limit given.');
         }
 
         return (int) $size;

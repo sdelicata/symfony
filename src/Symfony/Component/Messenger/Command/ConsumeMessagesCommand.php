@@ -64,7 +64,7 @@ Use the --limit option to limit the number of messages received:
 
     <info>php %command.full_name% <receiver-name> --limit=10</info>
 
-Use the --memory-limit option to limit the memory consumed by the worker. Use PHP shorthand byte values [K, M or G]:
+Use the --memory-limit option to stop the worker if it exceeds a given memory usage limit. You can use shorthand byte values [K, M or G]:
 
     <info>php %command.full_name% <receiver-name> --memory-limit=128M</info>
 EOF
