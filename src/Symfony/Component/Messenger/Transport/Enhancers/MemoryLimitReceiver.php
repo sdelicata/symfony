@@ -11,6 +11,7 @@
 
 namespace Symfony\Component\Messenger\Transport\Enhancers;
 
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Transport\ReceiverInterface;
 
 /**
@@ -20,12 +21,18 @@ class MemoryLimitReceiver implements ReceiverInterface
 {
     private $decoratedReceiver;
     private $memoryLimit;
+    private $logger;
     private $memoryResolver;
 
-    public function __construct(ReceiverInterface $decoratedReceiver, string $memoryLimit, callable $memoryResolver = null)
-    {
+    public function __construct(
+        ReceiverInterface $decoratedReceiver,
+        string $memoryLimit,
+        LoggerInterface $logger = null,
+        callable $memoryResolver = null
+    ) {
         $this->decoratedReceiver = $decoratedReceiver;
         $this->memoryLimit = $this->convertToOctets($memoryLimit);
+        $this->logger = $logger;
         $this->memoryResolver = $memoryResolver ?: function () {
             return \memory_get_usage();
         };
@@ -39,6 +46,9 @@ class MemoryLimitReceiver implements ReceiverInterface
             $memoryResolver = $this->memoryResolver;
             if ($memoryResolver() >= $this->memoryLimit) {
                 $this->stop();
+                if ($this->logger) {
+                    $this->logger->info('Receiver stopped due to memory limit exceeded.');
+                }
             }
         });
     }
@@ -50,7 +60,9 @@ class MemoryLimitReceiver implements ReceiverInterface
 
     private function convertToOctets(string $size): int
     {
-        if (\preg_match('/^(\d+)([G|M|K]*)$/', $size, $matches)) {
+        if (!\preg_match('/^(\d+)([G|M|K]*)$/', $size, $matches)) {
+            throw new \InvalidArgumentException('Invalid memory limit given.');
+        } else {
             if ('G' == $matches[2]) {
                 $size = $matches[1] * 1024 * 1024 * 1024;
             } elseif ('M' == $matches[2]) {
@@ -58,8 +70,6 @@ class MemoryLimitReceiver implements ReceiverInterface
             } elseif ('K' == $matches[2]) {
                 $size = $matches[1] * 1024;
             }
-        } else {
-            throw new \InvalidArgumentException('Invalid memory limit given.');
         }
 
         return $size;

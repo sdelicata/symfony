@@ -16,7 +16,6 @@ use Symfony\Component\Messenger\Asynchronous\Transport\ReceivedMessage;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Tests\Fixtures\CallbackReceiver;
 use Symfony\Component\Messenger\Tests\Fixtures\DummyMessage;
-use Symfony\Component\Messenger\Transport\ReceiverInterface;
 use Symfony\Component\Messenger\Worker;
 
 class WorkerTest extends TestCase

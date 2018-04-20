@@ -12,6 +12,7 @@
 namespace Symfony\Component\Messenger\Tests\Transport\Enhancers;
 
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Tests\Fixtures\CallbackReceiver;
 use Symfony\Component\Messenger\Tests\Fixtures\DummyMessage;
 use Symfony\Component\Messenger\Transport\Enhancers\MemoryLimitReceiver;
@@ -44,7 +45,7 @@ class MemoryLimitReceiverTest extends TestCase
             return $memoryUsage;
         };
 
-        $memoryLimitReceiver = new MemoryLimitReceiver($decoratedReceiver, $memoryLimit, $memoryResolver);
+        $memoryLimitReceiver = new MemoryLimitReceiver($decoratedReceiver, $memoryLimit, null, $memoryResolver);
         $memoryLimitReceiver->receive(function () {});
     }
 
@@ -82,5 +83,31 @@ class MemoryLimitReceiverTest extends TestCase
         yield array('1024X'); // bad unit
         yield array('128m'); // lowercase unit
         yield array('128 M'); // string with space
+    }
+
+    public function testReceiverLogsMemoryExceededWhenLoggerIsGiven()
+    {
+        $callable = function ($handler) {
+            $handler(new DummyMessage('API'));
+        };
+
+        $decoratedReceiver = $this->getMockBuilder(CallbackReceiver::class)
+            ->setConstructorArgs(array($callable))
+            ->enableProxyingToOriginalMethods()
+            ->getMock();
+
+        $decoratedReceiver->expects($this->once())->method('receive');
+        $decoratedReceiver->expects($this->once())->method('stop');
+
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects($this->once())->method('info')
+            ->with($this->equalTo('Receiver stopped due to memory limit exceeded.'));
+
+        $memoryResolver = function () {
+            return 70 * 1024 * 1024;
+        };
+
+        $memoryLimitReceiver = new MemoryLimitReceiver($decoratedReceiver, '64M', $logger, $memoryResolver);
+        $memoryLimitReceiver->receive(function () {});
     }
 }
