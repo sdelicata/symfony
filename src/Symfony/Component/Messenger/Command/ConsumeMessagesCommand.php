@@ -20,6 +20,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Transport\Enhancers\MaximumCountReceiver;
 use Symfony\Component\Messenger\Transport\Enhancers\MemoryLimitReceiver;
+use Symfony\Component\Messenger\Transport\Enhancers\TimeoutReceiver;
 use Symfony\Component\Messenger\Transport\ReceiverInterface;
 use Symfony\Component\Messenger\Worker;
 
@@ -53,6 +54,7 @@ class ConsumeMessagesCommand extends Command
                 new InputArgument('receiver', InputArgument::REQUIRED, 'Name of the receiver'),
                 new InputOption('limit', 'l', InputOption::VALUE_REQUIRED, 'Limit the number of received messages'),
                 new InputOption('memory-limit', 'm', InputOption::VALUE_REQUIRED, 'The memory limit the worker can consume'),
+                new InputOption('timeout', 't', InputOption::VALUE_REQUIRED, 'The worker timeout'),
             ))
             ->setDescription('Consumes messages')
             ->setHelp(<<<'EOF'
@@ -67,6 +69,10 @@ Use the --limit option to limit the number of messages received:
 Use the --memory-limit option to stop the worker if it exceeds a given memory usage limit. You can use shorthand byte values [K, M or G]:
 
     <info>php %command.full_name% <receiver-name> --memory-limit=128M</info>
+
+Use the --timeout option to stop the worker if it waits more than a given time (PCNTL extension is required):
+
+    <info>php %command.full_name% <receiver-name> --timeout=60</info>
 EOF
             )
         ;
@@ -91,6 +97,10 @@ EOF
 
         if ($memoryLimit = $input->getOption('memory-limit')) {
             $receiver = new MemoryLimitReceiver($receiver, $memoryLimit);
+        }
+
+        if ($timeout = $input->getOption('timeout')) {
+            $receiver = new TimeoutReceiver($receiver, $timeout);
         }
 
         $worker = new Worker($receiver, $this->bus);
