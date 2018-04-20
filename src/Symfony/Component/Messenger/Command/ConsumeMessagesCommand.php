@@ -12,6 +12,7 @@
 namespace Symfony\Component\Messenger\Command;
 
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -34,13 +35,15 @@ class ConsumeMessagesCommand extends Command
 
     private $bus;
     private $receiverLocator;
+    private $logger;
 
-    public function __construct(MessageBusInterface $bus, ContainerInterface $receiverLocator)
+    public function __construct(MessageBusInterface $bus, ContainerInterface $receiverLocator, LoggerInterface $logger = null)
     {
         parent::__construct();
 
         $this->bus = $bus;
         $this->receiverLocator = $receiverLocator;
+        $this->logger = $logger;
     }
 
     /**
@@ -86,11 +89,11 @@ EOF
         }
 
         if ($limit = $input->getOption('limit')) {
-            $receiver = new MaximumCountReceiver($receiver, $limit);
+            $receiver = new MaximumCountReceiver($receiver, $limit, $this->logger);
         }
 
         if ($memoryLimit = $input->getOption('memory-limit')) {
-            $receiver = new MemoryLimitReceiver($receiver, $memoryLimit);
+            $receiver = new MemoryLimitReceiver($receiver, $memoryLimit, $this->logger);
         }
 
         $worker = new Worker($receiver, $this->bus);
