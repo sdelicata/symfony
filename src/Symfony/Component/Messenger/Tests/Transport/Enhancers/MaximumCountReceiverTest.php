@@ -99,5 +99,4 @@ class MaximumCountReceiverTest extends TestCase
         $maximumCountReceiver = new MaximumCountReceiver($decoratedReceiver, 1, $logger);
         $maximumCountReceiver->receive(function () {});
     }
-
 }
