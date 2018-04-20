@@ -24,12 +24,8 @@ class MemoryLimitReceiver implements ReceiverInterface
     private $logger;
     private $memoryResolver;
 
-    public function __construct(
-        ReceiverInterface $decoratedReceiver,
-        string $memoryLimit,
-        LoggerInterface $logger = null,
-        callable $memoryResolver = null
-    ) {
+    public function __construct(ReceiverInterface $decoratedReceiver, string $memoryLimit, LoggerInterface $logger = null, callable $memoryResolver = null)
+    {
         $this->decoratedReceiver = $decoratedReceiver;
         $this->memoryLimit = $this->convertToOctets($memoryLimit);
         $this->logger = $logger;
@@ -46,8 +42,8 @@ class MemoryLimitReceiver implements ReceiverInterface
             $memoryResolver = $this->memoryResolver;
             if ($memoryResolver() >= $this->memoryLimit) {
                 $this->stop();
-                if ($this->logger) {
-                    $this->logger->info('Receiver stopped due to memory limit exceeded.');
+                if (null !== $this->logger) {
+                    $this->logger->info('Receiver stopped due to memory limit of {limit} exceeded', array('limit' => $this->memoryLimit));
                 }
             }
         });
@@ -62,14 +58,14 @@ class MemoryLimitReceiver implements ReceiverInterface
     {
         if (!\preg_match('/^(\d+)([G|M|K]*)$/', $size, $matches)) {
             throw new \InvalidArgumentException('Invalid memory limit given.');
-        } else {
-            if ('G' == $matches[2]) {
-                $size = $matches[1] * 1024 * 1024 * 1024;
-            } elseif ('M' == $matches[2]) {
-                $size = $matches[1] * 1024 * 1024;
-            } elseif ('K' == $matches[2]) {
-                $size = $matches[1] * 1024;
-            }
+        }
+
+        if ('G' == $matches[2]) {
+            $size = $matches[1] * 1024 * 1024 * 1024;
+        } elseif ('M' == $matches[2]) {
+            $size = $matches[1] * 1024 * 1024;
+        } elseif ('K' == $matches[2]) {
+            $size = $matches[1] * 1024;
         }
 
         return $size;

@@ -101,7 +101,10 @@ class MemoryLimitReceiverTest extends TestCase
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects($this->once())->method('info')
-            ->with($this->equalTo('Receiver stopped due to memory limit exceeded.'));
+            ->with(
+                $this->equalTo('Receiver stopped due to memory limit of {limit} exceeded'),
+                $this->equalTo(array('limit' => 64 * 1024 * 1024))
+            );
 
         $memoryResolver = function () {
             return 70 * 1024 * 1024;
