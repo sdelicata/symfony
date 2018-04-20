@@ -12,6 +12,7 @@
 namespace Symfony\Component\Messenger\Tests\Transport\Enhancers;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Messenger\Tests\Fixtures\CallbackReceiver;
 use Symfony\Component\Messenger\Tests\Fixtures\DummyMessage;
 use Symfony\Component\Messenger\Transport\Enhancers\MemoryLimitReceiver;
 use Symfony\Component\Messenger\Transport\ReceiverInterface;
@@ -23,9 +24,15 @@ class MemoryLimitReceiverTest extends TestCase
      */
     public function testReceiverStopsWhenMemoryLimitExceeded($memoryUsage, $memoryLimit, $shouldStop)
     {
-        $decoratedReceiver = $this->getMockBuilder(ReceiverToDecorate::class)
+        $callable = function ($handler) {
+            $handler(new DummyMessage('API'));
+        };
+
+        $decoratedReceiver = $this->getMockBuilder(CallbackReceiver::class)
+            ->setConstructorArgs(array($callable))
             ->enableProxyingToOriginalMethods()
             ->getMock();
+
         $decoratedReceiver->expects($this->once())->method('receive');
         if (true === $shouldStop) {
             $decoratedReceiver->expects($this->once())->method('stop');
@@ -75,17 +82,5 @@ class MemoryLimitReceiverTest extends TestCase
         yield array('1024X'); // bad unit
         yield array('128m'); // lowercase unit
         yield array('128 M'); // string with space
-    }
-}
-
-class ReceiverToDecorate implements ReceiverInterface
-{
-    public function receive(callable $handler): void
-    {
-        $handler(new DummyMessage('API'));
-    }
-
-    public function stop(): void
-    {
     }
 }
