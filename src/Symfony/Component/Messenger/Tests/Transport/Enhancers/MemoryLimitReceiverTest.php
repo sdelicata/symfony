@@ -43,22 +43,20 @@ class MemoryLimitReceiverTest extends TestCase
 
     public function memoryProvider()
     {
-        return array(
-            array(2048, 1024, true),
-            array(1024, 1024, true),
-            array(1024, 2048, false),
-            array(129 * 1024, '128K', true),
-            array(128 * 1024, '128K', true),
-            array(127 * 1024, '128K', false),
-            array(65 * 1024 * 1024, '64M', true),
-            array(64 * 1024 * 1024, '64M', true),
-            array(63 * 1024 * 1024, '64M', false),
-            array(2 * 1024 * 1024 * 1024, '1G', true),
-            array(1 * 1024 * 1024 * 1024, '1G', true),
-            array(10 * 1024 * 1024, '1G', false),
-            array(1 * 1024 * 1024 * 1024, '1M', true),
-            array(1 * 1024 * 1024 * 1024, '1K', true),
-        );
+        yield array(2048, 1024, true);
+        yield array(1024, 1024, true);
+        yield array(1024, 2048, false);
+        yield array(129 * 1024, '128K', true);
+        yield array(128 * 1024, '128K', true);
+        yield array(127 * 1024, '128K', false);
+        yield array(65 * 1024 * 1024, '64M', true);
+        yield array(64 * 1024 * 1024, '64M', true);
+        yield array(63 * 1024 * 1024, '64M', false);
+        yield array(2 * 1024 * 1024 * 1024, '1G', true);
+        yield array(1 * 1024 * 1024 * 1024, '1G', true);
+        yield array(10 * 1024 * 1024, '1G', false);
+        yield array(1 * 1024 * 1024 * 1024, '1M', true);
+        yield array(1 * 1024 * 1024 * 1024, '1K', true);
     }
 
     /**
@@ -73,12 +71,10 @@ class MemoryLimitReceiverTest extends TestCase
 
     public function invalidMemoryLimitProvider()
     {
-        return array(
-            array('without_digit'), // string without digit
-            array('1024X'), // bad unit
-            array('128m'), // lowercase unit
-            array('128 M'), // string with space
-        );
+        yield array('without_digit'); // string without digit
+        yield array('1024X'); // bad unit
+        yield array('128m'); // lowercase unit
+        yield array('128 M'); // string with space
     }
 }
 

@@ -26,7 +26,7 @@ class MemoryLimitReceiver implements ReceiverInterface
     {
         $this->decoratedReceiver = $decoratedReceiver;
         $this->memoryLimit = $this->convertToOctets($memoryLimit);
-        $this->memoryResolver = $memoryResolver ?? function () {
+        $this->memoryResolver = $memoryResolver ?: function () {
             return \memory_get_usage();
         };
     }
@@ -62,6 +62,6 @@ class MemoryLimitReceiver implements ReceiverInterface
             throw new \InvalidArgumentException('Invalid memory limit given.');
         }
 
-        return (int) $size;
+        return $size;
     }
 }
