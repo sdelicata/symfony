@@ -127,6 +127,43 @@ class AmqpExtIntegrationTest extends TestCase
         });
     }
 
+    public function testReceiverStopsWhenTimeoutExpired()
+    {
+        $serializer = new Serializer(
+            new SerializerComponent\Serializer(array(new ObjectNormalizer()), array('json' => new JsonEncoder()))
+        );
+
+        $connection = Connection::fromDsn(getenv('MESSENGER_AMQP_DSN'));
+        $connection->setup();
+        $connection->queue()->purge();
+
+        $sender = new AmqpSender($serializer, $connection);
+        $sender->send(new DummyMessage('Hello'));
+
+        $amqpReadTimeout = 30;
+        $dsn = getenv('MESSENGER_AMQP_DSN').'?read_timeout='.$amqpReadTimeout;
+
+        $process = new PhpProcess(file_get_contents(__DIR__.'/Fixtures/long_receiver.php'), null, array(
+            'COMPONENT_ROOT' => __DIR__.'/../../../',
+            'DSN' => $dsn,
+            'RECEIVER_TIMEOUT' => 2,
+        ));
+
+        $startTime = microtime(true);
+        $timedOutTime = time() + 10;
+
+        $process->start();
+
+        $this->waitForOutput($process, $expectedOutput = "Receiving messages...\n");
+
+        while ($process->isRunning() && time() < $timedOutTime) {
+            usleep(100 * 1000); // 100ms
+        }
+
+        $this->assertFalse($process->isRunning());
+        $this->assertLessThan(30, microtime(true) - $startTime);
+    }
+
     private function waitForOutput(Process $process, string $output, $timeoutInSeconds = 10)
     {
         $timedOutTime = time() + $timeoutInSeconds;

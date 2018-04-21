@@ -1,6 +1,7 @@
 <?php
 
 $componentRoot = $_SERVER['COMPONENT_ROOT'];
+$receiverTimeout = $_SERVER['RECEIVER_TIMEOUT'] ?? null;
 
 if (!is_file($autoload = $componentRoot.'/vendor/autoload.php')) {
     $autoload = $componentRoot.'/../../../../vendor/autoload.php';
@@ -16,6 +17,7 @@ use Symfony\Component\Messenger\Adapter\AmqpExt\AmqpReceiver;
 use Symfony\Component\Messenger\Adapter\AmqpExt\AmqpSender;
 use Symfony\Component\Messenger\Adapter\AmqpExt\Connection;
 use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Transport\Enhancers\TimeoutReceiver;
 use Symfony\Component\Messenger\Transport\Serialization\Serializer;
 use Symfony\Component\Messenger\Worker;
 use Symfony\Component\Serializer as SerializerComponent;
@@ -28,7 +30,11 @@ $serializer = new Serializer(
 
 $connection = Connection::fromDsn(getenv('DSN'));
 $sender = new AmqpSender($serializer, $connection);
+
 $receiver = new AmqpReceiver($serializer, $connection);
+if (null !== $receiverTimeout) {
+    $receiver = new TimeoutReceiver($receiver, $receiverTimeout);
+}
 
 $worker = new Worker($receiver, new class() implements MessageBusInterface {
     public function dispatch($message)

@@ -103,7 +103,7 @@ EOF
         }
 
         if ($timeout = $input->getOption('timeout')) {
-            $receiver = new TimeoutReceiver($receiver, $timeout);
+            $receiver = new TimeoutReceiver($receiver, $timeout, $this->logger);
         }
 
         $worker = new Worker($receiver, $this->bus);
